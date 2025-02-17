@@ -165,11 +165,23 @@ class UltraVehicleCard extends localize(LitElement) {
         border-radius: var(--ha-card-border-radius, 4px);
         overflow: hidden;
       }
+      .map-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.3));
+        pointer-events: none;
+        z-index: 1;
+      }
       .map-overlay {
         position: relative;
-        z-index: 1;
-        background: rgba(var(--card-background-color, #fff), 0.9);
+        z-index: 2;
+        background: rgba(var(--card-background-color, 255, 255, 255), 0.85);
         padding: 16px;
+        backdrop-filter: blur(2px);
       }
       .ultra-vehicle-card {
         padding: 16px;
