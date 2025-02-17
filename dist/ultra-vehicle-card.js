@@ -86,10 +86,38 @@ class UltraVehicleCard extends localize(LitElement) {
           ? "double-column"
           : ""}"
       >
-        ${this.config.layoutType === "double"
-          ? this._renderDoubleColumnLayout()
-          : this._renderSingleColumnLayout()}
+        ${this.config.show_map ? this._renderMap() : ""}
+        <div class="map-overlay">
+          ${this.config.layoutType === "double"
+            ? this._renderDoubleColumnLayout()
+            : this._renderSingleColumnLayout()}
+        </div>
       </ha-card>
+    `;
+  }
+
+  _renderMap() {
+    if (!this.config.location_entity) return "";
+    
+    const locationEntity = this.hass.states[this.config.location_entity];
+    if (!locationEntity) return "";
+
+    const latitude = locationEntity.attributes.latitude;
+    const longitude = locationEntity.attributes.longitude;
+    
+    if (!latitude || !longitude) return "";
+
+    return html`
+      <div class="map-container">
+        <ha-map
+          .hass=${this.hass}
+          .entities=${[this.config.location_entity]}
+          .zoom=${this.config.map_zoom}
+          .center=${[latitude, longitude]}
+          .darkMode=${this.config.map_dark_mode}
+          .renderPath=${true}
+        ></ha-map>
+      </div>
     `;
   }
 
@@ -127,6 +155,22 @@ class UltraVehicleCard extends localize(LitElement) {
   static get styles() {
     return css`
       ${styles}
+      .map-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        border-radius: var(--ha-card-border-radius, 4px);
+        overflow: hidden;
+      }
+      .map-overlay {
+        position: relative;
+        z-index: 1;
+        background: rgba(var(--card-background-color, #fff), 0.9);
+        padding: 16px;
+      }
       .ultra-vehicle-card {
         padding: 16px;
       }
@@ -1701,6 +1745,9 @@ class UltraVehicleCard extends localize(LitElement) {
       ],
       show_engine_animation: config.show_engine_animation !== false,
       show_charging_animation: config.show_charging_animation !== false,
+      show_map: config.show_map || false,
+      map_zoom: config.map_zoom || 14,
+      map_dark_mode: config.map_dark_mode || false,
     };
 
     this._updateStyles();
