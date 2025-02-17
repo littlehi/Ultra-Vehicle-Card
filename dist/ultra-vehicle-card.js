@@ -168,10 +168,10 @@ class UltraVehicleCard extends localize(LitElement) {
       .map-container::after {
         content: '';
         position: absolute;
-        top: 0;
+        top: 25%;
         left: 0;
         width: 100%;
-        height: 100%;
+        height: 75%;
         background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.1));
         pointer-events: none;
         z-index: 1;
