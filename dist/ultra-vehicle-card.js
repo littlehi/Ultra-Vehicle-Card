@@ -172,7 +172,7 @@ class UltraVehicleCard extends localize(LitElement) {
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.3));
+        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.1));
         pointer-events: none;
         z-index: 1;
       }
