@@ -165,7 +165,17 @@ class UltraVehicleCard extends localize(LitElement) {
         border-radius: var(--ha-card-border-radius, 4px);
         overflow: hidden;
       }
-
+      .map-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.1));
+        pointer-events: none;
+        z-index: 1;
+      }
       .map-overlay {
         position: relative;
         z-index: 2;
