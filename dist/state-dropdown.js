@@ -1,7 +1,7 @@
 import {
   html,
   LitElement,
-} from "https://unpkg.com/lit-element@2.4.0/lit-element.js?module";
+} from "https://cdn.jsdelivr.net/npm/lit-element@2.4.0/lit-element.js?module";
 
 class StateDropdown extends LitElement {
   static get properties() {

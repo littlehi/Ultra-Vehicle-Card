@@ -1,4 +1,4 @@
-import { dedupingMixin } from "https://unpkg.com/@polymer/polymer@3.4.1/lib/utils/mixin.js?module";
+import { dedupingMixin } from "https://cdn.jsdelivr.net/npm/@polymer/polymer@3.4.1/lib/utils/mixin.js?module";
 
 const LocalizeMixin = dedupingMixin(
   (superClass) =>
