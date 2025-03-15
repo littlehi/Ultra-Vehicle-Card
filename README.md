@@ -8,6 +8,18 @@ https://ultravehiclecard.com
 
 This custom card allows you to display vehicle information in your Home Assistant dashboard, including the vehicle name, image, and fuel or charge level. For any EVs you will see an animation when charging.
 
+## 新功能: 实时位置地图
+
+现在Ultra Vehicle Card提供了实时位置地图功能，让您能够直观地看到车辆的当前位置。
+
+![Vehicle Map Feature](https://github.com/user-attachments/assets/4fbd3ad9-fc07-4923-895c-4e316adbbf64)
+
+主要功能：
+- 显示车辆的实时位置
+- 可折叠地图视图
+- 自定义地图高度和缩放级别
+- 支持各种位置追踪实体
+
 ## Installation
 
 ### HACS (Recommended)
@@ -383,3 +395,30 @@ By carefully customizing these visual elements, you can create a card that not o
 **Note**: All configuration is done through the graphical interface - no manual code editing is required! You can of course use code if needed.
 
 [<img alt="Discord" width="320px" src="https://github.com/user-attachments/assets/d924143e-e6fd-48f0-82f0-9bbd85e0235c" />](https://www.discord.gg/6xVgHxzzBV)
+
+## 配置地图功能
+
+要启用实时位置地图功能，您需要在卡片配置中添加以下选项：
+
+```yaml
+type: custom:ultra-vehicle-card
+# ... 其他配置项 ...
+show_map: true
+location_entity: device_tracker.my_car_location
+map_height: 300px
+map_zoom: 15
+```
+
+配置选项：
+- `show_map`: 设置为 `true` 启用地图显示
+- `location_entity`: 车辆位置的实体ID（通常是device_tracker类型）
+- `map_height`: 地图高度（默认：300px）
+- `map_zoom`: 地图缩放级别，范围1-20（默认：15）
+
+### 位置实体要求
+
+位置实体应该提供经纬度信息，可以是以下任一形式：
+1. 实体属性中包含 `latitude` 和 `longitude`
+2. 实体状态为 "latitude,longitude" 格式的字符串
+
+大多数车辆集成（如Tesla、BMW Connected Drive等）已提供位置追踪实体，可直接使用。

@@ -28,6 +28,7 @@ class UltraVehicleCard extends localize(LitElement) {
     return {
       hass: { type: Object },
       config: { type: Object },
+      _mapVisible: { type: Boolean },
     };
   }
 
@@ -103,6 +104,7 @@ class UltraVehicleCard extends localize(LitElement) {
         ${this._renderIconGrid()}
       </div>
       ${this._renderVehicleInfo()}
+      ${this._shouldRenderMap() ? this._renderVehicleMap() : ""}
     `;
   }
 
@@ -119,6 +121,7 @@ class UltraVehicleCard extends localize(LitElement) {
           <div class="full-width-column">
             ${this._renderIconGrid()} ${this._renderVehicleInfo()}
           </div>
+          ${this._shouldRenderMap() ? html`<div class="full-width-column">${this._renderVehicleMap()}</div>` : ""}
         </div>
       </div>
     `;
@@ -151,23 +154,26 @@ class UltraVehicleCard extends localize(LitElement) {
       }
       .right-column {
         flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center; /* Horizontally center items */
+        padding-left: 16px;
       }
-      .right-column > * {
-        width: 100%; /* Ensure child elements take full width */
-        text-align: center; /* Center text within child elements */
-      }
-      .full-width-column {
+      .map-container {
         width: 100%;
+        margin-top: 16px;
+        margin-bottom: 16px;
+        border-radius: var(--ha-card-border-radius, 4px);
+        overflow: hidden;
       }
-      .double-column-container .vehicle-name {
-        margin-bottom: 12px;
-        margin-top: 0px;
+      .map-toggle {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 8px;
+        cursor: pointer;
+        color: var(--primary-color);
       }
-
+      .map-toggle ha-icon {
+        margin-right: 4px;
+      }
       .progress {
         position: absolute;
         left: 0;
@@ -1703,6 +1709,19 @@ class UltraVehicleCard extends localize(LitElement) {
       show_charging_animation: config.show_charging_animation !== false,
     };
 
+    // 添加默认地图配置
+    if (config.show_map === undefined) {
+      config.show_map = false;
+    }
+    if (!config.map_height) {
+      config.map_height = '300px';
+    }
+    if (!config.map_zoom) {
+      config.map_zoom = 15;
+    }
+    
+    this._mapVisible = true; // 默认显示地图
+
     this._updateStyles();
     this._updateImageHeights();
     this.requestUpdate();
@@ -1774,6 +1793,76 @@ class UltraVehicleCard extends localize(LitElement) {
 
   _onThemeChanged() {
     this._updateStyles();
+  }
+
+  _shouldRenderMap() {
+    return this.config.show_map && this.config.location_entity;
+  }
+
+  _renderVehicleMap() {
+    if (!this.hass || !this.config.location_entity) {
+      return html``;
+    }
+
+    const locationEntity = this.hass.states[this.config.location_entity];
+    if (!locationEntity) {
+      return html`<div class="map-error">位置实体不可用</div>`;
+    }
+
+    // 检查是否有经纬度数据
+    let latitude, longitude;
+    
+    if (locationEntity.attributes.latitude && locationEntity.attributes.longitude) {
+      latitude = locationEntity.attributes.latitude;
+      longitude = locationEntity.attributes.longitude;
+    } else if (locationEntity.state && locationEntity.state.includes(",")) {
+      // 尝试从状态解析经纬度，格式可能是 "latitude,longitude"
+      const [lat, lon] = locationEntity.state.split(",").map(coord => parseFloat(coord.trim()));
+      if (!isNaN(lat) && !isNaN(lon)) {
+        latitude = lat;
+        longitude = lon;
+      }
+    }
+
+    if (!latitude || !longitude) {
+      return html`<div class="map-error">无法获取车辆位置数据</div>`;
+    }
+
+    const mapHeight = this.config.map_height || '300px';
+    const zoom = this.config.map_zoom || 15;
+    const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${longitude - 0.01},${latitude - 0.01},${longitude + 0.01},${latitude + 0.01}&marker=${latitude},${longitude}&layers=M`;
+
+    // 创建 map-toggle 按钮的处理程序
+    const toggleMap = () => {
+      this._mapVisible = !this._mapVisible;
+      this.requestUpdate();
+    };
+
+    // 根据 _mapVisible 状态决定是否显示地图
+    return html`
+      <div class="map-container" style="height: ${mapHeight}">
+        ${this._mapVisible || this._mapVisible === undefined ? 
+          html`<iframe
+            title="车辆位置地图"
+            width="100%"
+            height="100%"
+            frameborder="0"
+            scrolling="no"
+            marginheight="0"
+            marginwidth="0"
+            src="${mapUrl}"
+            style="border: 1px solid var(--divider-color, #e0e0e0); border-radius: var(--ha-card-border-radius, 4px);"
+          ></iframe>` : 
+          html`<div class="map-placeholder" style="height:100%;display:flex;align-items:center;justify-content:center;background:var(--card-background-color);border:1px solid var(--divider-color, #e0e0e0);">
+            <span>点击下方按钮显示地图</span>
+          </div>`
+        }
+      </div>
+      <div class="map-toggle" @click="${toggleMap}">
+        <ha-icon icon="${this._mapVisible ? 'mdi:chevron-up' : 'mdi:chevron-down'}"></ha-icon>
+        <span>${this._mapVisible ? '隐藏地图' : '显示地图'}</span>
+      </div>
+    `;
   }
 }
 

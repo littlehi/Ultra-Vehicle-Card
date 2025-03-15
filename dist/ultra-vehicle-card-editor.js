@@ -335,7 +335,7 @@ export class UltraVehicleCardEditor extends localize(LitElement) {
     this._defaultColors = {};
     this._userChangedColors = {};
     this._themeChangeListener = this._onThemeChange.bind(this);
-    this._activeTab = "settings";
+    this._activeTab = 0;
     this._expandedEntities = {};
     this._iconLabels = {};
     this._lovelaceViews = [];
@@ -611,62 +611,49 @@ export class UltraVehicleCardEditor extends localize(LitElement) {
   }
 
   render() {
-    if (!this.hass) {
+    if (!this.hass || !this.config) {
       return html``;
     }
 
+    const tabs = [
+      { name: "基本", icon: "mdi:car" },
+      { name: "颜色", icon: "mdi:palette" },
+      { name: "图标网格", icon: "mdi:grid" },
+      { name: "地图", icon: "mdi:map-marker" }, // 添加地图选项卡
+    ];
+
     return html`
-      <div class="editor-container">
-        <div class="tab-bar">
-          <div
-            class="tab ${this._activeTab === "settings" ? "active" : ""}"
-            @click=${() => this._handleTabChange(0)}
-          >
-            <ha-icon icon="mdi:cog"></ha-icon>
-            <span>${this.localize("editor.settings")}</span>
-          </div>
-          <div
-            class="tab ${this._activeTab === "icon-grid" ? "active" : ""}"
-            @click=${() => this._handleTabChange(1)}
-          >
-            <ha-icon icon="mdi:apps"></ha-icon>
-            <span>${this.localize("editor.icon_grid")}</span>
-          </div>
-          <div
-            class="tab ${this._activeTab === "customize" ? "active" : ""}"
-            @click=${() => this._handleTabChange(2)}
-          >
-            <ha-icon icon="mdi:palette"></ha-icon>
-            <span>${this.localize("editor.customize")}</span>
-          </div>
+      <div class="card-config">
+        <div class="tabs">
+          ${tabs.map(
+            (tab, index) => html`
+              <div
+                class="tab ${this._activeTab === index ? "active" : ""}"
+                @click="${() => this._handleTabChange(index)}"
+              >
+                <ha-icon icon="${tab.icon}"></ha-icon>
+                <span>${tab.name}</span>
+              </div>
+            `
+          )}
         </div>
 
         <div class="tab-content">
-          ${this._activeTab === "settings"
-            ? html`
-                ${this._renderBasicConfig()} ${this._renderLayoutChooser()}
-                ${this._renderFormattedEntitiesToggle()}
-                ${this._renderEntityInformation()}
-              `
-            : ""}
-          ${this._activeTab === "icon-grid"
-            ? html` ${this._renderIconGridConfig()} `
-            : ""}
-          ${this._activeTab === "customize"
-            ? html`
-                ${this._renderColorPickers()} ${this._renderBarGradientToggle()}
-              `
-            : ""}
+          ${this._activeTab === 0
+            ? this._renderBasicConfig()
+            : this._activeTab === 1
+            ? this._renderColorPickers()
+            : this._activeTab === 2
+            ? this._renderIconGridConfig()
+            : this._renderMapConfig()}
         </div>
       </div>
     `;
   }
 
   _handleTabChange(index) {
-    const tabIds = ["settings", "icon-grid", "customize"];
-    this._activeTab = tabIds[index];
+    this._activeTab = index;
     this._refreshConfig();
-    this.requestUpdate();
   }
 
   _renderLayoutChooser() {
@@ -3911,6 +3898,84 @@ export class UltraVehicleCardEditor extends localize(LitElement) {
       "horizontalAlignment",
       horizontalAlignment
     );
+  }
+
+  // 添加渲染地图配置的方法
+  _renderMapConfig() {
+    if (!this.hass || !this.config) {
+      return html``;
+    }
+
+    return html`
+      <div class="config-section">
+        <h3>地图设置</h3>
+        
+        <div class="row">
+          <ha-switch
+            .checked=${this.config.show_map || false}
+            @change=${(e) => {
+              this._updateConfig("show_map", e.target.checked);
+            }}
+          ></ha-switch>
+          <span>显示位置地图</span>
+        </div>
+        
+        <div class="settings-row">
+          <div class="entity-picker">
+            <paper-input
+              label="位置实体"
+              .value=${this.config.location_entity || ""}
+              @value-changed=${(e) => {
+                this._updateConfig("location_entity", e.detail.value);
+              }}
+              .disabled=${!this.config.show_map}
+            ></paper-input>
+            <ha-entity-picker
+              .hass=${this.hass}
+              .value=${this.config.location_entity || ""}
+              .includeDomains=${["device_tracker", "sensor", "zone"]}
+              @value-changed=${(e) => {
+                this._updateConfig("location_entity", e.detail.value);
+              }}
+              .disabled=${!this.config.show_map}
+            ></ha-entity-picker>
+          </div>
+        </div>
+        
+        <div class="row">
+          <paper-input
+            label="地图高度"
+            .value=${this.config.map_height || "300px"}
+            @value-changed=${(e) => {
+              this._updateConfig("map_height", e.detail.value);
+            }}
+            .disabled=${!this.config.show_map}
+          ></paper-input>
+        </div>
+        
+        <div class="row">
+          <paper-input
+            label="地图缩放级别"
+            type="number"
+            min="1"
+            max="20"
+            .value=${this.config.map_zoom || "15"}
+            @value-changed=${(e) => {
+              this._updateConfig("map_zoom", Number(e.detail.value));
+            }}
+            .disabled=${!this.config.show_map}
+          ></paper-input>
+        </div>
+        
+        <div class="info-text">
+          <ul>
+            <li>位置实体应该是一个能提供经纬度坐标的实体，如设备跟踪器（device_tracker）</li>
+            <li>地图高度可以使用任何有效的CSS尺寸值（例如 '300px'、'20em'、'50vh'）</li>
+            <li>地图缩放级别从1（最远）到20（最近）</li>
+          </ul>
+        </div>
+      </div>
+    `;
   }
 }
 customElements.define("ultra-vehicle-card-editor", UltraVehicleCardEditor);
